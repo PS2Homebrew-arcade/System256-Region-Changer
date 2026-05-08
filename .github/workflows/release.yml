@@ -1,0 +1,48 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - "main"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ps2dev/ps2dev:latest
+    permissions:
+      contents: write
+    steps:
+      - name: Install dependencies
+        run: |
+          apk add build-base git bash zip
+
+      - name: Increment our tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_branches: main
+          custom_release_rules: "release:major:New release!"
+
+      - uses: actions/checkout@v4
+      - run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --prune --unshallow --tags
+
+      - name: Compile project
+        run: |
+          make clean all REGION=ASIA4
+          make clean all REGION=ASIA5
+          make clean all REGION=JAPAN
+          zip SYSTEM256_Region_Change.zip bin/*.ELF LICENSE README.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v3
+        if: steps.tag_version.outputs.new_tag
+        with:
+          prerelease: true
+          generate_release_notes: true
+          files: |
+            SYSTEM256_Region_Change.zip
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
