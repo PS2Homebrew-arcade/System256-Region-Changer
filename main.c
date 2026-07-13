@@ -129,6 +129,7 @@ int main()
         scr_printf("\t!!! THIS SYSTEM256 IS ALREADY CONFIGURED ON THE %s REGION\n", aliases[REGION]);
         goto death;
     }
+    if (found < 0) found = 0;
     if (found < 0) {
         scr_setfontcolor(0x0000F0);
         scr_printf("\n\t!!! Unknown regional signature\n");
